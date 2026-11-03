@@ -1,5 +1,6 @@
 from fastapi import APIRouter, status, HTTPException
 from app.schemas.events import ExternalObservationData, HealthcareEvent
+from app.services.fhir_mapper import to_fhir_observation
 from app. services.observation_mapper import map_external_observation
 
 #
@@ -23,7 +24,12 @@ PAYLOAD_EXAMPLE = {
 ## Observation Event Endpoint
 @router.post("/observations",status_code=status.HTTP_202_ACCEPTED)
 async def create_observation_event(payload: ExternalObservationData):
-
+    """
+        - Receives data from third parties in JSON format
+        - Validates and converts it into the internal model
+        - Converts it into the FHIR model
+        - Responds in a more structured format, containing both the internal event and the FHIR model
+    """
     try:
         # Map the external test
         observation = map_external_observation(payload)
@@ -34,6 +40,17 @@ async def create_observation_event(payload: ExternalObservationData):
             detail=str(error),
         )
 
+
+    try:
+        # Convert internal observation to FHIR
+        fhir_observation = to_fhir_observation(observation)
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error converting to FHIR: {str(error)}",
+        )
+    
     # Validation passed, create the HealthcareEvent
     event = HealthcareEvent(
         patient_id=observation.patient_id,
@@ -42,5 +59,6 @@ async def create_observation_event(payload: ExternalObservationData):
 
     return {
         "message": "Event Accepted",
-        "event": event,
+        "event": event, # Internal Converted Event
+        "fhir": fhir_observation, # FHIR Compliant Observation (Example)
     }
