@@ -36,7 +36,7 @@ async def create_observation_event(payload: ExternalObservationData):
 
     except ValueError as error:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(error),
         )
 
