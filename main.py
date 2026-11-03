@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 import uvicorn
 
+from app.api.routes.events import router as events_router
+
 # App Data
 app = FastAPI(
     title="HealthCare Integration Platform",
@@ -9,12 +11,17 @@ app = FastAPI(
 )
 
 
+#
+## Health Check Endpoint
 @app.get("/health")
 async def health_check():
     return {
         "status": "healthy",
         "service": "healthcare-integration-platform"
     }
+
+# Router Routes
+app.include_router(events_router)
 
 
 if __name__ == "__main__":
