@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, HTTPException
 from app.schemas.events import ExternalObservationData, HealthcareEvent
 from app.services.fhir_mapper import to_fhir_observation
-from app. services.observation_mapper import map_external_observation
+from app.services.observation_mapper import map_external_observation
 
 #
 ## Router Data - For Events
