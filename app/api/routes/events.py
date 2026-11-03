@@ -1,5 +1,5 @@
 from fastapi import APIRouter, status, HTTPException
-from app.schemas.events import ExternalObservationData, HealthcareEvent
+from app.schemas.events import ExternalObservationData, HealthcareEvent, ObservationEventMessage
 from app.services.fhir_mapper import to_fhir_observation
 from app.services.observation_mapper import map_external_observation
 
@@ -39,7 +39,14 @@ async def create_observation_event(payload: ExternalObservationData):
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(error),
         )
+    
+    # Validation passed, create the HealthcareEvent
+    event = HealthcareEvent(
+        patient_id=observation.patient_id,
+        data=observation,    
+    )
 
+    
 
     try:
         # Convert internal observation to FHIR
@@ -51,14 +58,20 @@ async def create_observation_event(payload: ExternalObservationData):
             detail=f"Error converting to FHIR: {str(error)}",
         )
     
-    # Validation passed, create the HealthcareEvent
-    event = HealthcareEvent(
-        patient_id=observation.patient_id,
-        data=observation,    
+    
+
+    # Create the message that will be published to Kafka
+    kafka_message = ObservationEventMessage(
+        event_id = event.event_id,
+        event_type = event.event_type,
+        timestamp = event.timestamp,
+        patient_id = event.patient_id,
+        data = fhir_observation,
     )
 
     return {
         "message": "Event Accepted",
         "event": event, # Internal Converted Event
         "fhir": fhir_observation, # FHIR Compliant Observation (Example)
+        "kafka_message": kafka_message, # Kafka Message Format
     }

@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from uuid import uuid4
 from datetime import datetime, timezone
+from typing import Any
 
 
 #
@@ -29,3 +30,14 @@ class ExternalObservationData(BaseModel):
     test: str
     result: float
     measurement: str
+
+
+
+#
+## Observation Event Message - Kafka Message Format
+class ObservationEventMessage(BaseModel):
+    event_id: str
+    event_type: str
+    timestamp: datetime
+    patient_id: str
+    data: dict[str, Any]

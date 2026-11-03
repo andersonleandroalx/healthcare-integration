@@ -37,6 +37,13 @@ def test_create_observation_event():
     assert data["fhir"]["resourceType"] == "Observation"
     assert data["fhir"]["valueQuantity"]["value"] == 5.3
 
+    kafka_message = data["kafka_message"]
+    assert kafka_message["event_id"] == data["event"]["event_id"]
+    assert kafka_message["event_type"] == "observation.created"
+    assert kafka_message["patient_id"] == "P-1001"
+    assert kafka_message["data"]["resourceType"] == "Observation"
+    assert kafka_message["data"]["valueQuantity"]["value"] == 5.3
+
 
 
 #
