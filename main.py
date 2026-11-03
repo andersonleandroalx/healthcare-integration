@@ -1,5 +1,7 @@
 
 from contextlib import asynccontextmanager
+from pathlib import Path
+from fastapi.responses import FileResponse
 import os
 
 from fastapi import FastAPI
@@ -49,6 +51,15 @@ async def health_check():
         "service": "healthcare-integration-platform"
     }
 
+#
+## Dashboard
+@app.get("/dashboard")
+async def dashboard():
+    html_path = Path("app/templates/dashboard.html")
+    return FileResponse(html_path)
+
+
+#
 # Router Routes
 app.include_router(events_router)
 

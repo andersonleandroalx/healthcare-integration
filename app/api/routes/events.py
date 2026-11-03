@@ -101,3 +101,4 @@ async def create_observation_event(payload: ExternalObservationData, db: Session
         "fhir": fhir_observation, # FHIR Compliant Observation (Example)
         "kafka_message": kafka_message, # Kafka Message Format
     }
+
