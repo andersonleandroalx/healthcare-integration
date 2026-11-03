@@ -25,6 +25,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+*.pyc
 
 # PyInstaller
 #   Usually these files are written by a python script from a template
@@ -148,6 +149,11 @@ activemq-data/
 
 # SageMath parsed files
 *.sage.py
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
 
 # Environments
 .env
