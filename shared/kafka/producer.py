@@ -31,7 +31,7 @@ class KafkaEventProducer:
 
         try:
             await self.producer.start()
-            print("Kafka conectado com TLS + SCRAM!")
+            print("Kafka connected with TLS + SCRAM!")
         except Exception as e:
             print(type(e).__name__, repr(e))
             raise
@@ -44,7 +44,7 @@ class KafkaEventProducer:
 
     async def publish_observation(self, event: ObservationEventMessage):
         message = event.model_dump_json().encode("utf-8")
-
+        
         await self.producer.send_and_wait(
             topic=self.topic,
             value=message
