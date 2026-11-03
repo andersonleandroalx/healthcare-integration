@@ -5,8 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Healthcare Integration Monitor</title>
+
     <style>
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
         body {
             margin: 0;
@@ -16,7 +19,9 @@
             font-family: Arial, sans-serif;
         }
 
-        h1 { margin-top: 0; }
+        h1 {
+            margin-top: 0;
+        }
 
         .subtitle {
             color: #64748b;
@@ -35,6 +40,7 @@
             border-radius: 12px;
             padding: 20px;
             min-height: 500px;
+            overflow-wrap: anywhere;
         }
 
         h2 {
@@ -51,7 +57,7 @@
             font-weight: bold;
         }
 
-        input, button {
+        input {
             width: 100%;
             padding: 11px;
             border-radius: 7px;
@@ -60,7 +66,10 @@
         }
 
         button {
+            width: 100%;
+            padding: 11px;
             margin-top: 18px;
+            border-radius: 7px;
             background: #2563eb;
             color: white;
             border: none;
@@ -68,15 +77,13 @@
             font-weight: bold;
         }
 
-        button:hover { background: #1d4ed8; }
+        button:hover {
+            background: #1d4ed8;
+        }
 
-        pre {
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-            background: #f8fafc;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 12px;
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
         }
 
         .status {
@@ -87,63 +94,153 @@
             font-size: 12px;
         }
 
+        .history-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .history-card small {
+            color: #64748b;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            font-size: 12px;
+            margin-bottom: 0;
+        }
+
+        .empty {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
         @media (max-width: 900px) {
-            .dashboard { grid-template-columns: 1fr; }
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
+
 <body>
+
     <h1>Healthcare Integration Monitor</h1>
+
     <p class="subtitle">
         Observation event flow: API → SQLite Outbox → Kafka
     </p>
 
     <main class="dashboard">
 
+        <!-- COLUMN 1: FORM -->
+
         <section class="column">
             <h2>1. Send Observation</h2>
 
             <form id="observation-form">
+
                 <label for="patient-id">Patient ID</label>
                 <input id="patient-id" value="P-1001" required>
 
                 <label for="test">Test</label>
                 <input id="test" value="GLU" required>
 
+                <label for="glucose">Result</label>
+                <input id="glucose"
+                       type="number"
+                       step="0.1"
+                       value="5.3"
+                       required>
+
                 <label for="measurement">Measurement</label>
                 <input id="measurement" value="mmol/L" required>
 
-                <label for="glucose">Glucose (mmol/L)</label>
-                <input id="glucose" type="number"
-                       step="0.1" value="5.3" required>
+                <button id="submit-button" type="submit">
+                    Send Observation
+                </button>
 
-                <button type="submit">Send Observation</button>
             </form>
 
             <p id="form-status">Waiting for submission...</p>
         </section>
 
+
+        <!-- COLUMN 2: OUTBOX -->
+
         <section class="column">
             <h2>2. SQLite Outbox</h2>
-            <span class="status" id="outbox-status">Waiting</span>
-            <h3>Stored Event</h3>
-            <pre id="outbox-data">No event stored yet.</pre>
+
+            <span class="status" id="outbox-status">
+                Waiting
+            </span>
+
+            <div id="outbox-history">
+                <p class="empty">No events stored yet.</p>
+            </div>
         </section>
+
+
+        <!-- COLUMN 3: KAFKA -->
 
         <section class="column">
             <h2>3. Kafka Consumer</h2>
-            <span class="status" id="kafka-status">Waiting</span>
-            <h3>Received Message</h3>
-            <pre id="kafka-data">No message received yet.</pre>
+
+            <span class="status" id="kafka-status">
+                Connecting...
+            </span>
+
+            <div id="kafka-history">
+                <p class="empty">No messages received yet.</p>
+            </div>
         </section>
 
     </main>
 
+
     <script>
+
+        // Add a new event to the history
+
+        function addHistory(containerId, data) {
+
+            const container = document.getElementById(containerId);
+
+            const emptyMessage = container.querySelector(".empty");
+
+            if (emptyMessage) {
+                emptyMessage.remove();
+            }
+
+            const card = document.createElement("div");
+            card.className = "history-card";
+
+            const time = document.createElement("small");
+            time.textContent = new Date().toLocaleTimeString();
+
+            const content = document.createElement("pre");
+            content.textContent = JSON.stringify(data, null, 2);
+
+            card.appendChild(time);
+            card.appendChild(content);
+
+            container.prepend(card);
+        }
+
+
+        // FORM SUBMISSION
+
         const form = document.getElementById("observation-form");
 
         form.addEventListener("submit", async (e) => {
+
             e.preventDefault();
+
+            const button = document.getElementById("submit-button");
+            const status = document.getElementById("form-status");
 
             const payload = {
                 patient_number: document.getElementById("patient-id").value,
@@ -152,11 +249,12 @@
                 measurement: document.getElementById("measurement").value
             };
 
-            const status = document.getElementById("form-status");
+            button.disabled = true;
             status.textContent = "Sending...";
 
             try {
-                const response = await fetch("/events/observations/", {
+
+                const response = await fetch("/events/observations", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -170,19 +268,71 @@
                     throw new Error(JSON.stringify(data));
                 }
 
-                status.textContent = "Observation sent successfully!";
+                status.textContent = "Observation submitted successfully!";
 
-                document.getElementById("outbox-data").textContent =
-                    JSON.stringify(data, null, 2);
+                // Display the API response in the Outbox column
+                addHistory("outbox-history", data);
+                console.log("OUTBOX EVENT:", data);
 
                 document.getElementById("outbox-status").textContent =
                     "Submitted";
 
             } catch (error) {
-                status.textContent = "Error: " + error.message;
-            }
-        });
-    </script>
-</body>
 
+                status.textContent = "Error: " + error.message;
+
+            } finally {
+
+                button.disabled = false;
+
+            }
+
+        });
+
+
+        // KAFKA WEBSOCKET
+
+        const kafkaStatus = document.getElementById("kafka-status");
+
+        const protocol = window.location.protocol === "https:"
+            ? "wss:"
+            : "ws:";
+
+        const ws = new WebSocket(
+            `${protocol}//${window.location.host}/ws/observations`
+        );
+
+        ws.onopen = () => {
+            kafkaStatus.textContent = "Connected";
+        };
+
+        ws.onmessage = (event) => {
+
+            try {
+
+                const message = JSON.parse(event.data);
+
+                addHistory("kafka-history", message);
+
+                kafkaStatus.textContent = "Message received";
+
+            } catch (error) {
+
+                console.error("Invalid Kafka message:", error);
+
+            }
+
+        };
+
+        ws.onerror = () => {
+            kafkaStatus.textContent = "Connection error";
+        };
+
+        ws.onclose = () => {
+            kafkaStatus.textContent = "Disconnected";
+        };
+
+    </script>
+
+</body>
 </html>
