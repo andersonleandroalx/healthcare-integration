@@ -5,7 +5,7 @@ A Python-based healthcare integration PoC demonstrating how clinical observation
 The project explores event-driven architecture, asynchronous processing, secure messaging, and real-time monitoring.
 
 > **Project Context & Motivation:**
-> This Proof of Concept was designed and built from scratch as part of an intensive technical preparation for a senior-level technical interview. Coming into the process without prior direct experience in Kafka-based enterprise pipelines, I built this repository in a short timeframe to deeply understand the mechanics of event-driven messaging, system integration, and real-time streaming architectures in Python.
+> This Proof of Concept was designed and built from scratch as part of a targeted technical preparation for an enterprise integration role. While I already rely heavily on event-driven architectures in my automated trading platform, I created this project in a short timeframe to gain hands-on practice specifically with Apache Kafka, exploring enterprise event streaming, FHIR data standards, and real-time integration pipelines in Python.
 
 ## Architecture
 
